@@ -1,0 +1,572 @@
+/*
+for compiler settings to run the graphics library because it uses 32 bit compiler instead of the default 64 bit
+https://www.youtube.com/watch?v=VEkAj-xVTKQ
+This is snakes and ladder project created by the ones following:
+Aditya Prakash Bhagchandani 7001152 T008
+Youssef Hazem Zaky 7002202 T014
+Hassan Moataz Moghazi 7002453 T010
+Abdelrahman Amr Samir 7037138 T011
+Ahmad Tarek Abdou 7002545 T010
+*/
+#include <iostream>
+#include <cstring>
+#include <random>      //To use randomizing
+#include<ctime>        //In order for randomizing to be different every time we need to include the current time
+#include <iomanip>     //Setting the width and alignment of cells
+#include <windows.h>   //For color coding and using links
+#include <graphics.h>  //To open images
+#include <stdlib.h>
+#include <dos.h>
+using namespace std;
+time_t current_time;
+//We create a class called table and then have 2 functions that search for the values inside the 2D array which will be used later
+class Table;
+int searchvaule(int arr[],int s,int value){
+    int x = 0;
+    int dx;
+    for (int i = 0;i<s;i++){
+        if (arr[i]==value){
+            x=1;
+            dx=i;
+            break;
+        }
+    }
+    return x;
+}
+int searchvaule1(int arr[],int s,int value){
+    int x = 1;
+    for (int i = 0;i<s;i++){
+        if (arr[i]==value){
+            x=i;
+            break;
+        }
+        i++;
+    }
+    return x;
+}
+//Here we have class Player with the health, x and y coordinates and turns attributes declared
+class player{
+public:
+    int health;
+    int px=15;
+    int py=14;
+    int turns=0;
+    string name;
+
+    player(string x){   //the player with the name given from the user has these attributes
+        health = 10;
+        px = 15;
+        py = 14;
+        turns = 0;
+        name = x;
+        }
+    int x(){return px;}              //return x positon
+    int y(){return py;}             //return y postion
+    int turn(){return turns;}      //return number of turns
+    string names(){return name;}
+    void step(){                  //A method called step to give the player a position in the array
+     if (px==0&&py==0){
+          px=0;
+          py=0;
+     }
+     else if (px>=1){px=px-1;}
+     else{
+          px=14;
+          py=py-1;
+     }
+    }
+    void pwrs(){                             // the method for the power ups which has a random position
+        srand(rand()%time(&current_time));  // generated each game and increases health by 5
+        int choice=rand()% 2+1;
+        if (choice==1){
+          for (int i =0;i<5;i++){
+            if (px==0&&py==0){
+              px=0;
+              py=0;
+            }
+            else{step();}
+          }
+        }
+        else{health=health+5;}
+    }
+    void NEG(){                              //the negative method which is also randomly
+        srand(rand()%time(&current_time));  //generated each game and decreases health by 5
+        int choice=rand()% 2+1;
+        if (choice==1){
+          for (int i =0;i<5;i++){
+             if (px>=14&&py>=14){
+                px=14;
+                py=14;
+             }
+             if (py==0 && px>5)
+             {
+                 py=0;
+                 px=px-5;
+             }
+             else if (py==0 && px<5)
+             {
+                 py=1;
+                 px=px+11;
+             }
+             else if (px>=14){
+                px=0;
+                py=py-1;
+             }
+            else{px=px+1;}
+          }
+        }
+        else{health=health-5;}
+   }
+    int dice(Table x,int y);
+};
+class Table{                                           //this is where the dark magic happens
+public:                                                //so first we create the x and y coordinates for our table
+    int x[15]={0,1,2,3,4,5,6,7,8,9,10,11,12,13};       //then we make a 2D array for all the cells
+    int y[15]={0,1,2,3,4,5,6,7,8,9,10,11,12,13};
+    int xy[10];
+    int x1[6];
+    int y1[6];
+    int x2[6];
+    int y2[6];
+    int arr[15][15];
+    int k = 225;
+    string N1="P1";
+    string N11[15][15];                                //These strings are to have player 1 be displayed in the array as P1
+    string TY="NEU";                                   //and player 2 displayed as P2 and for each cell without a power up or
+    string TYP[15][15];                                //a power down to have neutral displayed as NEU
+    string N2="P2";
+    string N22[15][15];
+    Table(string P1, string P2){
+        N1 = P1;
+        N2 = P2;
+        for (int i =0;i<6;i++){
+          int d = 14;
+          srand(rand()%(rand()%time(&current_time)));
+          int dx=rand()% d;
+          x1[i]=x[dx];
+          for(int i=dx; i<14; i++){
+             x[i] = x[i+1];
+          }
+          d--;
+          dx=rand()% d;
+          x2[i]=x[dx];
+          for(int i=dx; i<14; i++){
+             x[i] = x[i+1];
+          }
+          d--;
+       }
+       for (int i =0;i<6;i++){                          //To randomize the position of the power ups on the y-axis of the 2D array
+          int d = 14;
+          srand(rand()%time(&current_time));
+          int dy=rand()% d;
+          y1[i]=y[dy];
+          for(int i=dy; i<15; i++){
+              y[i] = y[i+1];
+          }
+          d--;
+          dy=rand()% d;
+          y2[i]=y[dy];
+          for(int i=dy; i<15; i++){
+              y[i] = y[i+1];
+          }
+          d--;
+      }
+      k=225;
+      for (int i=0;i<15;i++){
+         for (int j=0;j<15;j++){
+            arr[i][j]=k;
+            k--;
+        }
+      }
+      for (int i=0;i<15;i++){
+        for (int j=0;j<15;j++){
+            N11[i][j]=N1;
+        }
+      }
+      for (int i=0;i<15;i++){
+        for (int j=0;j<15;j++){
+             N22[i][j]=N2;
+        }
+      }
+      int pc=5;
+      int pn=5;
+      for (int i=0;i<15;i++){
+        for (int j=0;j<15;j++){  //Randomizing the position of the power function
+            if (searchvaule(x1,pc,j)!=0&&searchvaule(y1,pc,i)!=0){
+                TYP[i][j]="PWR";
+                for(int i=searchvaule1(x1,pc,j); i<pc; i++){x1[i] = x1[i+1];}  //Randomized the position on the x-axis
+                for(int i=searchvaule1(y1,pc,i); i<pc; i++){y1[i] = y1[i+1];}  //Randomized the position on the y-axis
+                pc--;
+           }
+           else if (searchvaule(x2,pn,j)!=0&&searchvaule(y2,pn,i)!=0){  //Randomizing for negative function
+                TYP[i][j]="NEG";
+                for(int i=searchvaule1(x2,pn,j); i<pn; i++){x2[i] = x2[i+1];}
+                for(int i=searchvaule1(y1,pn,i); i<pn; i++){y2[i] = y2[i+1];}
+                pn--;
+           }
+            else{
+                TYP[i][j]=TY;
+            }
+        }
+      }
+    }
+    void print_1(player x,player y){    //This entire method is to give all the odd numbered cells
+        int k = 14;                     // the color green and for the even cells the color white.
+        int g = 14;                     //For P1 a red color for their cell and for P2 a light blue
+        int aligner=1;                  //color. The power ups are given the color blue and for the
+       for (int i = 0;i<15;i++){        //power downs a gray color. It is also used to display all
+            if (aligner%2==0){          //of these attributes inside the Table in the console.
+                    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0xCF);  //GetStdHandle(STD_OUTPUT_HANDLE), 0xCF) the 0xCF is the value of our color
+                          for (int j=0;j<15;j++){
+            if (k%2 == 0){
+               SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0xA0);
+              cout<< left << setw(3)<< arr[i][j];
+              if (i==x.y()&&j==x.x()){
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0xC0);
+                cout<<"   "<< left << setw(3)<< N11[i][j];
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0x00);
+                cout<<"   ";
+              }
+              else{
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0xAA);
+                cout<<"   "<< left << setw(3)<< N11[i][j];
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0x00);
+                cout<<"   ";
+              }
+              k++;
+              }
+            else{
+             SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0xF0);
+              cout<< left << setw(3)<< arr[i][j];
+              if (i==x.y()&&j==x.x()){
+               SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0xC0);
+                cout<<"   "<< left << setw(3)<< N11[i][j];
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0x00);
+                cout<<"   ";
+              }
+              else{
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0xFF);
+                cout<<"   "<< left << setw(3)<< N11[i][j];
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0x00);
+                cout<<"   ";
+              }
+              k++;
+            }
+          }
+          SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0x00); //For the grid displacing which is the black lines between each cell
+          cout<<endl;
+          for (int j=0;j<15;j++){
+                if (g%2 == 0){
+               if (TYP[i][j]=="PWR"){  //This is to color the cell containing PWR
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0x90);
+                cout<< left << setw(3)<< TYP[i][j];
+            }
+            else if(TYP[i][j]=="NEG"){ //This is to color the cells containing NEG
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0x70);
+                cout<< left << setw(3)<< TYP[i][j];
+            }
+            else{
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0xA0);
+                cout<< left << setw(3)<< TYP[i][j];
+            }
+              if (i==y.y()&&j==y.x()){
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0xB0);
+                cout<<"   "<< left << setw(3)<< N22[i][j];
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0x00);
+                cout<<"   ";
+              }
+              else{
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0xAA);
+                cout<<"   "<< left << setw(3)<< N22[i][j];
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0x00);
+                cout<<"   ";
+              }
+              g++;
+              }
+            else{
+             if (TYP[i][j]=="PWR"){
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0x90);
+                cout<< left << setw(3)<< TYP[i][j];
+            }
+            else if(TYP[i][j]=="NEG"){
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0x70);
+                cout<< left << setw(3)<< TYP[i][j];
+            }
+            else{
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0xF0);
+                cout<< left << setw(3)<< TYP[i][j];
+            }
+              if (i==y.y()&&j==y.x()){
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0xB0);
+                cout<<"   "<< left << setw(3)<< N22[i][j];
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0x00);
+                cout<<"   ";
+              }
+              else{
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0xFF);
+                cout<<"   "<< left << setw(3)<< N22[i][j];
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0x00);
+                cout<<"   ";
+              }
+              g++;
+            }
+          }
+          SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0x00); //Repeated for each row
+          cout<<"  "<<endl<<endl;
+
+              aligner++;  //This is used to change the pattern of player travel, meaning it moves in a snake like pattern
+            }
+            else{
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0xCF);
+                                       for (int j=14;j>-1;j--){
+            if (k%2 == 0){
+               SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0xA0);
+              cout<< left << setw(3)<< arr[i][j];
+              if (i==x.y()&&j==x.x()){  //This is for changing the color in the cell which shows which player is present
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0xC0);
+                cout<<"   "<< left << setw(3)<< N11[i][j];
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0x00);
+                cout<<"   ";
+              }
+              else{
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0xAA);
+                cout<<"   "<< left << setw(3)<< N11[i][j];
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0x00);
+                cout<<"   ";
+              }
+              k++;
+              }
+            else{
+             SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0xF0);
+              cout<< left << setw(3)<< arr[i][j];
+              if (i==x.y()&&j==x.x()){
+               SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0xC0);
+                cout<<"   "<< left << setw(3)<< N11[i][j];
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0x00);
+                cout<<"   ";
+              }
+              else{
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0xFF);
+                cout<<"   "<< left << setw(3)<< N11[i][j];
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0x00);
+                cout<<"   ";
+              }
+              k++;
+            }
+          }
+          SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0x00); //This is repeated for each block
+          cout<<endl;
+          for (int j=14;j>-1;j--){
+                if (g%2 == 0){
+               if (TYP[i][j]=="PWR"){
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0x90);
+                cout<< left << setw(3)<< TYP[i][j];
+            }
+            else if(TYP[i][j]=="NEG"){
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0x70);
+                cout<< left << setw(3)<< TYP[i][j];
+            }
+            else{
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0xA0);
+                cout<< left << setw(3)<< TYP[i][j];
+            }
+              if (i==y.y()&&j==y.x()){
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0xB0);
+                cout<<"   "<< left << setw(3)<< N22[i][j];
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0x00);
+                cout<<"   ";
+              }
+              else{
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0xAA);
+                cout<<"   "<< left << setw(3)<< N22[i][j];
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0x00);
+                cout<<"   ";
+              }
+              g++;
+              }
+            else{
+             if (TYP[i][j]=="PWR"){
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0x90);
+                cout<< left << setw(3)<< TYP[i][j];
+            }
+            else if(TYP[i][j]=="NEG"){
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0x70);
+                cout<< left << setw(3)<< TYP[i][j];
+            }
+            else{
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0xF0);
+                cout<< left << setw(3)<< TYP[i][j];
+            }
+              if (i==y.y()&&j==y.x()){
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0xB0);
+                cout<<"   "<< left << setw(3)<< N22[i][j];
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0x00);
+                cout<<"   ";
+              }
+              else{
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0xFF);
+                cout<<"   "<< left << setw(3)<< N22[i][j];
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0x00);
+                cout<<"   ";
+              }
+              g++;
+            }
+          }
+          SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0x00);
+          cout<<"  "<<endl<<endl;
+
+              aligner++;
+            }
+       }
+
+    }
+};
+player::dice(Table x,int y){                //The dice method generates a random number between 1 to 6
+        srand(rand()%time(&current_time));  //like a real dice and checks for if there are power ups or
+        int die=rand()% 6+1;                //power downs in the position the player landed on.
+        int cn = 0;                         //Then shows what the value of the dice is that the player got.
+        int cp = 0;
+        for (int i=0;i<die;i++){
+            step();
+            if(x.TYP[py][px]=="NEG"){
+             cn=cn+1;
+            }
+            if(x.TYP[py][px]=="PWR"){
+                cp=cp+1;
+            }
+        }
+        if (cp>0){
+            for (int i=0;i<cp;i++){
+                pwrs();
+            }
+        }
+        if (cn>0){
+            for (int i=0;i<cn;i++){
+                NEG();
+            }
+        }
+        turns++;
+        y++;
+        cout<<"The value shown by the dice is : "<<die<<endl;
+        return y;
+        }
+
+        //This print method outputs the information of the game and the players
+        //such as their names, number of turns they played, health and so on.
+        //It also prints the Table with all the attributes set from before.
+void print(Table t,player P1,player P2,int x){
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0x00);
+    t.print_1(P1,P2);
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0x0F);
+    cout<<"Player 1 : "<<left<<setfill(' ')<<setw(10)<<P1.names()<<" Health : "<<left<<setfill(' ')<<setw(3)<<P1.health<<" Turns Taken : "<<right<<setfill('0')<<setw(3)<<P1.turn()<<setfill(' ')<<setw(15)<<"  "<<"Player 2 : "<<left<<setfill(' ')<<setw(10)<<P2.names()<<" Health : "<<left<<setfill(' ')<<setw(3)<<P2.health<<" Turns Taken : "<<right<<setfill('0')<<setw(3)<<P2.turn()<<setfill(' ')<<endl;
+    cout<<"Total amount of turns:"<<x<<endl;
+}
+
+int main(){
+    for (int i=0;i<30;i++){
+        if (i%2==0){
+            cout<<"For better viewing at the game play it in full screen."<<endl<<"Game is being prepared.";
+            system("CLS");
+        }
+        if (i%3==0){
+            cout<<"For better viewing at the game play it in full screen."<<endl<<"Game is being prepared..";
+            system("CLS");
+        }
+        else{
+            cout<<"For better viewing at the game play it in full screen."<<endl<<"Game is being prepared...";
+            system("CLS");
+        }
+
+    }
+    delay(100);
+    system("CLS");
+    int x =0;
+    string N1, N2;
+    string N3 = "abc";
+    string N4 = "abc";
+    cout<<"Please enter the name of player 1:"<<endl;
+    cin>>N1;
+    player P1(N1);
+    cout<<endl<<"Please enter the name of player 2 (If want to play against a computer type cpu):"<<endl;
+    cin>>N2;
+    player P2(N2);
+    for (int i=0; i<3; i++)
+    {
+        N3[i] = N1[i];
+        N4[i] = N2[i];
+    }
+    Table t(N3, N4);
+    int g=0;
+    while(g==0) {
+        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
+        if (x%2==0){
+            cout<<"Player 1 roll the dice by pressing 0."<<endl;
+            g=1;
+            while(g!=0){cin>>g;}
+            system("CLS");
+            x= P1.dice(t,x);
+        }
+        else{
+            if (N2!="cpu"){
+            cout<<"Player 2 roll the dice by pressing 0."<<endl;
+            g=1;
+            while(g!=0){cin>>g;}
+            system("CLS");
+            x= P2.dice(t,x);
+            }
+            else {
+               cout<< "computer plays it's turn";
+                system("CLS");
+                x= P2.dice(t,x);
+            }
+        }
+        print(t,P1,P2,x);
+        if ((P1.px==0&&P1.py==0) ||(P2.px==0&&P2.py==0) ||(P1.health==0)||(P2.health==0)){
+                if (P1.px==0&&P1.py==0){g=1;}
+                else if(P2.px==0&&P2.py==0){g=2;}
+                else if (P1.health<=0){g=3;}
+                else if (P2.health<=0){g=4;}
+                break;
+        }
+    }
+    cout<<"Press any button to view results"<<endl;
+    string s;
+    cin>>s;
+    system("CLS");
+
+    // assigning value to string s
+    if (g==1){cout<< P1.names()<<" won by reaching to the end first"<<endl;s=P1.names()+" won by reaching to the end first";}
+    if (g==2){cout<< P2.names()<<" won by reaching to the end first"<<endl;s=P2.names()+" won by reaching to the end first";}
+    if (g==3){cout<< P2.names()<<" won by default due to "<<P1.names()<<" died"<<endl;s=P2.names()+" won by default due to "+P1.names()+" died";}
+    if (g==4){cout<< P1.names()<<" won by default due to "<<P2.names()<<" died"<<endl;s=P2.names()+" won by default due to "+P1.names()+" died";}
+    print(t,P1,P2,x);
+
+     int n = s.length();
+    // declaring character array
+    char char_array[n + 1];
+    // copying the contents of the string to char array
+    strcpy(char_array, s.c_str());
+    //Declaring the window
+    initwindow(600, 500, "RESULTS");
+    //inserting the picture to the window
+    if (g==3||g==2){
+    readimagefile("WB.jpeg",0,0,200,260);
+    readimagefile("LR.jpeg",400,0,600,260);
+    }
+    else{
+    readimagefile("WR.jpeg",0,0,200,260);
+    readimagefile("LB.jpeg",400,0,600,260);
+    }
+    //inserting the text
+    settextstyle(COMPLEX_FONT,HORIZ_DIR,2);
+    outtextxy(0,260,char_array);
+    outtextxy(0,290,"Thank you for play our game :)");
+    outtextxy(0,320,"Created by :");
+    outtextxy(0,350,"Aditya Prakash Bhagchandani 7001152 T008");
+    outtextxy(0,380,"Youssef Hazem Zaky 7002202 T014");
+    outtextxy(0,410,"Hassan Moataz Moghazi 7002453 T010");
+    outtextxy(0,440,"Abdelrahman Amr Samir 7037138 T011");
+    outtextxy(0,470,"Ahmad Tarek Abdou 7002545 T010");
+    getch();
+    return 0;
+    }
